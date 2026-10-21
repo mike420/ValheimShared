@@ -1,5 +1,8 @@
 using Jotunn.Managers;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace MagicMike.ModSettings;
 
@@ -37,7 +40,7 @@ internal sealed class ModSettingsDriver : MonoBehaviour
 		m_panel.Toggle();
 	}
 
-	// The hotkey is ignored while the player is typing into the game's own text boxes
+	// The hotkey is ignored while the player is typing into the game's own text boxes, or a text box a mod added
 	private static bool IsTyping()
 	{
 		if (SettingsPanel.IsOpen)
@@ -46,6 +49,23 @@ internal sealed class ModSettingsDriver : MonoBehaviour
 		}
 		return global::Console.IsVisible()
 			|| TextInput.IsVisible()
-			|| (Chat.instance != null && Chat.instance.HasFocus());
+			|| (Chat.instance != null && Chat.instance.HasFocus())
+			|| TextBoxFocused();
+	}
+
+	private static bool TextBoxFocused()
+	{
+		GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+		if (selected == null)
+		{
+			return false;
+		}
+		TMP_InputField tmp = selected.GetComponent<TMP_InputField>();
+		if (tmp != null && tmp.isFocused)
+		{
+			return true;
+		}
+		InputField legacy = selected.GetComponent<InputField>();
+		return legacy != null && legacy.isFocused;
 	}
 }
