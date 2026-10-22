@@ -177,6 +177,7 @@ internal static class Widgets
 		Button button = background.gameObject.AddComponent<Button>();
 		button.targetGraphic = background;
 		button.colors = Theme.Colors(Theme.Button, Theme.ButtonHover, Theme.ButtonPressed, Theme.ButtonDisabled);
+		Snap(button);
 		AddClickSound(button.gameObject);
 
 		TMP_Text label = Label(background.transform, text, fontSize, Theme.Text, TextAlignmentOptions.Center);
@@ -203,6 +204,7 @@ internal static class Widgets
 		Toggle toggle = box.gameObject.AddComponent<Toggle>();
 		toggle.targetGraphic = box;
 		toggle.colors = Theme.Colors(Theme.Field, Theme.FieldHover, Theme.ButtonPressed, Theme.ButtonDisabled);
+		Snap(toggle);
 		Image check = Box(box.transform, "Check", Theme.Accent);
 		Fill(check.gameObject, 5f);
 		check.raycastTarget = false;
@@ -237,6 +239,7 @@ internal static class Widgets
 		slider.handleRect = handleRect;
 		slider.targetGraphic = handle;
 		slider.colors = Theme.Colors(Theme.Accent, Theme.AccentBright, Theme.AccentBright, Theme.Muted);
+		Snap(slider);
 		slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
 		return slider;
 	}
@@ -247,6 +250,7 @@ internal static class Widgets
 		TMP_InputField input = background.gameObject.AddComponent<TMP_InputField>();
 		input.targetGraphic = background;
 		input.colors = Theme.Colors(Theme.Field, Theme.FieldHover, Theme.FieldHover, Theme.ButtonDisabled);
+		Snap(input);
 
 		GameObject area = Child(background.transform, "Text Area");
 		area.AddComponent<RectMask2D>();
@@ -286,6 +290,7 @@ internal static class Widgets
 		Flatten(background, Color.white);
 		AddOutline(go, Theme.FieldOutline);
 		dropdown.colors = Theme.Colors(Theme.Field, Theme.FieldHover, Theme.FieldHover, Theme.ButtonDisabled);
+		Snap(dropdown);
 
 		Transform arrow = go.transform.Find("Arrow");
 		if (arrow != null)
@@ -451,6 +456,31 @@ internal static class Widgets
 			Flatten(handle, Color.white);
 		}
 		scrollbar.colors = Theme.Colors(Theme.ScrollHandle, Theme.Accent, Theme.AccentBright, Theme.Muted);
+		Snap(scrollbar);
+	}
+
+	// Shows a control in its state's colour at once. Setting its colours, or whether it can be clicked, fades it there from what it
+	// showed before, over the colours' fade time: on a control just made that is white, so a panel built again after a click
+	// flashed behind every control.
+	public static void Snap(Selectable selectable)
+	{
+		if (selectable == null || selectable.transition != Selectable.Transition.ColorTint || selectable.targetGraphic == null)
+		{
+			return;
+		}
+		ColorBlock colors = selectable.colors;
+		Color color = selectable.IsInteractable() ? colors.normalColor : colors.disabledColor;
+		selectable.targetGraphic.CrossFadeColor(color * colors.colorMultiplier, 0f, ignoreTimeScale: true, useAlpha: true);
+	}
+
+	// Snap for every control under root: for a panel just built whose code changed its controls' colours or interactable after
+	// making them
+	public static void SnapAll(Transform root)
+	{
+		foreach (Selectable selectable in root.GetComponentsInChildren<Selectable>(includeInactive: true))
+		{
+			Snap(selectable);
+		}
 	}
 
 	// Unity's dropdown builder creates its text already switched on, so TextMeshPro looks for its default font

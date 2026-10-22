@@ -13,7 +13,7 @@ namespace MagicMike.ModSettings;
 internal static class ModSettings
 {
 	// Bump this whenever the shared code changes, so the newest copy installed is the one that runs the panel
-	internal const int Version = 31;
+	internal const int Version = 32;
 
 	internal const string GuidPrefix = "MagicMike.";
 
