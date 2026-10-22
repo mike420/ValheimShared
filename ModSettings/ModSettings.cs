@@ -13,7 +13,7 @@ namespace MagicMike.ModSettings;
 internal static class ModSettings
 {
 	// Bump this whenever the shared code changes, so the newest copy installed is the one that runs the panel
-	internal const int Version = 30;
+	internal const int Version = 31;
 
 	internal const string GuidPrefix = "MagicMike.";
 
@@ -83,11 +83,22 @@ internal static class ModSettings
 		// Patched by hand rather than with attributes, so the mods' own PatchAll calls never pick it up
 		Harmony harmony = new Harmony("MagicMike.ModSettings");
 		harmony.Patch(AccessTools.Method(typeof(Menu), "Update"), prefix: new HarmonyMethod(typeof(ModSettings), nameof(MenuUpdatePrefix)));
+		harmony.Patch(AccessTools.Method(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel)), postfix: new HarmonyMethod(typeof(ModSettings), nameof(MouseScrollPostfix)));
 	}
 
 	// Escape closes the panel instead of opening the pause menu behind it
 	private static bool MenuUpdatePrefix()
 	{
 		return !SettingsPanel.IsOpen;
+	}
+
+	// The mouse wheel scrolls the panel's list, not the game behind it (the camera's zoom, the build menu, the hotbar): BlockInput
+	// leaves the wheel to the game. The list scrolls through Unity's own input, which this leaves alone.
+	private static void MouseScrollPostfix(ref float __result)
+	{
+		if (SettingsPanel.IsOpen)
+		{
+			__result = 0f;
+		}
 	}
 }
