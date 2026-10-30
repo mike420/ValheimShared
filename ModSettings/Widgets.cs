@@ -295,8 +295,8 @@ internal static class Widgets
 		Transform arrow = go.transform.Find("Arrow");
 		if (arrow != null)
 		{
+			// (the image's CanvasRenderer stays behind, and the icon draws with it)
 			UnityEngine.Object.DestroyImmediate(arrow.GetComponent<Image>());
-			arrow.gameObject.AddComponent<CanvasRenderer>();
 			DownArrowIcon icon = arrow.gameObject.AddComponent<DownArrowIcon>();
 			icon.color = Theme.Accent;
 			icon.raycastTarget = false;
