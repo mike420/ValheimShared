@@ -27,6 +27,13 @@ internal sealed class SettingsPanel : MonoBehaviour
 
 	private const float SectionTop = 162f;
 
+	// The links along the bottom, under a line; everything at the bottom of the panel sits above them
+	private const float FooterHeight = 44f;
+
+	private const string DiscordLink = "https://discord.gg/mnr36G6J4x";
+
+	private const string PayPalLink = "https://www.paypal.com/donate/?hosted_button_id=BN8HEWHRMAREU";
+
 	private const float SectionRowHeight = 32f;
 
 	private const float SectionGap = 5f;
@@ -187,21 +194,57 @@ internal sealed class SettingsPanel : MonoBehaviour
 		m_sectionBar = (RectTransform)Widgets.Child(panel, "Sections").transform;
 
 		m_settingsList = Widgets.ScrollView(panel);
-		Widgets.Place(m_settingsList.gameObject, Vector2.zero, Vector2.one, new Vector2(Margin, 166f), new Vector2(-Margin, -(SectionTop + SectionRowHeight + 10f)));
+		Widgets.Place(m_settingsList.gameObject, Vector2.zero, Vector2.one, new Vector2(Margin, 166f + FooterHeight), new Vector2(-Margin, -(SectionTop + SectionRowHeight + 10f)));
 		m_empty = Widgets.Label(m_settingsList.viewport, "No settings match your search.", 17f, Theme.Muted, TextAlignmentOptions.Center);
 		Widgets.Place(m_empty.gameObject, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -60f), new Vector2(0f, -20f));
 		m_empty.gameObject.SetActive(false);
 
 		// What the hovered setting does
 		Image descriptionBox = Widgets.Box(panel, "Description", Theme.Field, Theme.FieldOutline);
-		Widgets.Place(descriptionBox.gameObject, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(Margin, 48f), new Vector2(-Margin, 158f));
+		Widgets.Place(descriptionBox.gameObject, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(Margin, 48f + FooterHeight), new Vector2(-Margin, 158f + FooterHeight));
 		m_description = Widgets.Label(descriptionBox.transform, DescriptionHint, 18f, Theme.Text, TextAlignmentOptions.TopLeft);
 		m_description.textWrappingMode = TextWrappingModes.Normal;
 		m_description.overflowMode = TextOverflowModes.Truncate;
 		Widgets.Fill(m_description.gameObject, 8f);
 
 		m_hint = Widgets.Label(panel, "", 14f, Theme.Muted, TextAlignmentOptions.Center);
-		Widgets.Place(m_hint.gameObject, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(Margin, 14f), new Vector2(-Margin, 40f));
+		Widgets.Place(m_hint.gameObject, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(Margin, 14f + FooterHeight), new Vector2(-Margin, 40f + FooterHeight));
+
+		Image footerLine = Widgets.Box(panel, "FooterLine", Theme.FieldOutline);
+		Widgets.Place(footerLine.gameObject, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(Margin, FooterHeight + 6f), new Vector2(-Margin, FooterHeight + 7f));
+		Button discord = LinkButton(panel, LinkIcons.Discord, "COMMENTS/SUGGESTIONS", DiscordLink, iconOnRight: false);
+		Widgets.Place(discord.gameObject, new Vector2(0f, 0f), new Vector2(0.5f, 0f), new Vector2(Margin, 8f), new Vector2(0f, 8f + 34f));
+		Button payPal = LinkButton(panel, LinkIcons.PayPal, "DONATIONS", PayPalLink, iconOnRight: true);
+		Widgets.Place(payPal.gameObject, new Vector2(0.5f, 0f), new Vector2(1f, 0f), new Vector2(0f, 8f), new Vector2(-Margin, 8f + 34f));
+	}
+
+	// A logo and a title in Valheim's Norse lettering that open a web page; the title lights up under the mouse.
+	// The PayPal one sits against the right edge, its logo outermost
+	private static Button LinkButton(Transform parent, Sprite icon, string text, string url, bool iconOnRight)
+	{
+		Image hitArea = Widgets.Box(parent, text, Color.clear);
+		Button button = hitArea.gameObject.AddComponent<Button>();
+
+		Image logo = Widgets.Box(hitArea.transform, "Logo", Color.white);
+		logo.sprite = icon;
+		logo.preserveAspect = true;
+		logo.raycastTarget = false;
+		Vector2 side = iconOnRight ? new Vector2(1f, 0.5f) : new Vector2(0f, 0.5f);
+		Widgets.Place(logo.gameObject, side, side, new Vector2(iconOnRight ? -30f : 0f, -15f), new Vector2(iconOnRight ? 0f : 30f, 15f));
+
+		TMP_Text label = Widgets.Label(hitArea.transform, text, 26f, Color.white, iconOnRight ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft);
+		if (GUIManager.Instance.TMP_Norse != null)
+		{
+			label.font = GUIManager.Instance.TMP_Norse;
+		}
+		Widgets.Place(label.gameObject, Vector2.zero, Vector2.one, new Vector2(iconOnRight ? 0f : 42f, 0f), new Vector2(iconOnRight ? -42f : 0f, 0f));
+
+		// The title's colour comes from the tint alone (it is white underneath), so it can brighten
+		button.targetGraphic = label;
+		button.colors = Theme.Colors(Theme.Text, Theme.AccentBright, Theme.TextBright, Theme.Muted);
+		button.navigation = new Navigation { mode = Navigation.Mode.None };
+		button.onClick.AddListener(() => Application.OpenURL(url));
+		return button;
 	}
 
 	public void Open()
