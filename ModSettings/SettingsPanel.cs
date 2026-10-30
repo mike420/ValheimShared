@@ -33,6 +33,15 @@ internal sealed class SettingsPanel : MonoBehaviour
 
 	private const int MaxSectionsPerRow = 7;
 
+	// The mod tabs go in two rows when there are more than this, and everything under them moves down a row
+	private const int MaxTabsPerRow = 5;
+
+	private const float TabTop = 74f;
+
+	private const float TabRowHeight = 34f;
+
+	private const float TabGap = 5f;
+
 	private static string DescriptionHint => "<color=" + Theme.Tag(Theme.Muted) + ">Hover over a setting to see what it does.</color>";
 
 	private static readonly KeyCode[] s_modifiers =
@@ -80,6 +89,9 @@ internal sealed class SettingsPanel : MonoBehaviour
 	private ModInfo m_selected;
 
 	private RectTransform m_tabBar;
+
+	// How far the second row of tabs, if there is one, moves the title, search, sections and list down
+	private float m_tabShift;
 
 	private ScrollRect m_settingsList;
 
@@ -152,9 +164,8 @@ internal sealed class SettingsPanel : MonoBehaviour
 		Widgets.Place(recentre.gameObject, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(16f, -15f), new Vector2(106f, 15f));
 		recentre.onClick.AddListener(ResetPosition);
 
-		// One tab per installed mod
+		// One tab per installed mod (laid out, and the title and search placed under them, when the panel opens)
 		m_tabBar = (RectTransform)Widgets.Child(panel, "Tabs").transform;
-		Widgets.Place(m_tabBar.gameObject, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(Margin, -108f), new Vector2(-Margin, -74f));
 
 		// The selected mod's name and version
 		m_modTitle = Widgets.Label(panel, "", 20f, Theme.Text, bold: true);
@@ -163,11 +174,9 @@ internal sealed class SettingsPanel : MonoBehaviour
 		m_modTitle.fontSizeMax = 20f;
 		m_modTitle.textWrappingMode = TextWrappingModes.NoWrap;
 		m_modTitle.overflowMode = TextOverflowModes.Ellipsis;
-		Widgets.Place(m_modTitle.gameObject, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(Margin + 4f, -154f), new Vector2(Margin + ModTitleWidth, -116f));
 
 		// Search beside it, with a button inside it to clear it
 		m_search = Widgets.Input(panel, 17f, "Search settings...");
-		Widgets.Place(m_search.gameObject, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(Margin + ModTitleWidth + 12f, -154f), new Vector2(-Margin, -116f));
 		((RectTransform)m_search.textViewport).offsetMax = new Vector2(-46f, -2f);
 		m_search.onValueChanged.AddListener(_ => ApplySearch());
 		Button clear = Widgets.IconButton<CloseIcon>(m_search.transform, 9f);
@@ -324,13 +333,27 @@ internal sealed class SettingsPanel : MonoBehaviour
 	{
 		ClearChildren(m_tabBar);
 		m_tabs.Clear();
-		const float gap = 5f;
-		int count = Math.Max(1, m_mods.Count);
-		for (int i = 0; i < m_mods.Count; i++)
+		int count = m_mods.Count;
+		int rows = count <= MaxTabsPerRow ? 1 : 2;
+		int perRow = Math.Max(1, Mathf.CeilToInt(count / (float)rows));
+		m_tabShift = (rows - 1) * (TabRowHeight + TabGap);
+		float height = TabRowHeight + m_tabShift;
+		Widgets.Place(m_tabBar.gameObject, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(Margin, -(TabTop + height)), new Vector2(-Margin, -TabTop));
+		Widgets.Place(m_modTitle.gameObject, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(Margin + 4f, -(154f + m_tabShift)), new Vector2(Margin + ModTitleWidth, -(116f + m_tabShift)));
+		Widgets.Place(m_search.gameObject, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(Margin + ModTitleWidth + 12f, -(154f + m_tabShift)), new Vector2(-Margin, -(116f + m_tabShift)));
+
+		for (int i = 0; i < count; i++)
 		{
 			ModInfo mod = m_mods[i];
+			int row = i / perRow;
+			int column = i % perRow;
+			int inRow = row == rows - 1 ? count - row * perRow : perRow;
 			Button tab = Widgets.Button(m_tabBar, mod.Name, 19f);
-			Widgets.Place(tab.gameObject, new Vector2(i / (float)count, 0f), new Vector2((i + 1) / (float)count, 1f), new Vector2(gap / 2f, 0f), new Vector2(-gap / 2f, 0f));
+			Widgets.Place(tab.gameObject,
+				new Vector2(column / (float)inRow, 1f - (row + 1) / (float)rows),
+				new Vector2((column + 1) / (float)inRow, 1f - row / (float)rows),
+				new Vector2(TabGap / 2f, row < rows - 1 ? TabGap / 2f : 0f),
+				new Vector2(-TabGap / 2f, row > 0 ? -TabGap / 2f : 0f));
 			TMP_Text label = tab.GetComponentInChildren<TMP_Text>(includeInactive: true);
 			label.enableAutoSizing = true;
 			label.fontSizeMin = 12f;
@@ -403,9 +426,10 @@ internal sealed class SettingsPanel : MonoBehaviour
 		int rows = count == 0 ? 0 : count <= MaxSectionsPerRow ? 1 : 2;
 		int perRow = rows == 0 ? 0 : Mathf.CeilToInt(count / (float)rows);
 		float height = rows * SectionRowHeight + Math.Max(0, rows - 1) * SectionGap;
-		Widgets.Place(m_sectionBar.gameObject, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(Margin, -(SectionTop + height)), new Vector2(-Margin, -SectionTop));
+		float top = SectionTop + m_tabShift;
+		Widgets.Place(m_sectionBar.gameObject, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(Margin, -(top + height)), new Vector2(-Margin, -top));
 		RectTransform list = (RectTransform)m_settingsList.transform;
-		list.offsetMax = new Vector2(list.offsetMax.x, -(SectionTop + height + (rows > 0 ? 10f : 0f)));
+		list.offsetMax = new Vector2(list.offsetMax.x, -(top + height + (rows > 0 ? 10f : 0f)));
 
 		for (int i = 0; i < count; i++)
 		{
