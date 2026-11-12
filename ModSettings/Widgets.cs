@@ -310,7 +310,7 @@ internal static class Widgets
 			ScrollRect list = template.GetComponent<ScrollRect>();
 			if (list != null)
 			{
-				list.scrollSensitivity = 60f;
+				list.scrollSensitivity = 150f; list.movementType = ScrollRect.MovementType.Clamped; list.inertia = false;
 			}
 			Flatten(template.GetComponent<Image>(), Theme.Panel);
 			AddOutline(template.gameObject, Theme.PanelOutline);
