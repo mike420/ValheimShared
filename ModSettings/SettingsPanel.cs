@@ -180,7 +180,7 @@ internal sealed class SettingsPanel : MonoBehaviour
 		m_modTitle.fontSizeMin = 14f;
 		m_modTitle.fontSizeMax = 20f;
 		m_modTitle.textWrappingMode = TextWrappingModes.NoWrap;
-		m_modTitle.overflowMode = TextOverflowModes.Ellipsis;
+		Widgets.SetEllipsisOverflow(m_modTitle);
 
 		// Search beside it, with a button inside it to clear it
 		m_search = Widgets.Input(panel, 17f, "Search settings...");
@@ -491,7 +491,7 @@ internal sealed class SettingsPanel : MonoBehaviour
 			label.fontSizeMin = 11f;
 			label.fontSizeMax = 16f;
 			label.textWrappingMode = TextWrappingModes.NoWrap;
-			label.overflowMode = TextOverflowModes.Ellipsis;
+			Widgets.SetEllipsisOverflow(label);
 			button.onClick.AddListener(() => JumpTo(header));
 			m_sectionButtons.Add((button, label, header));
 		}
