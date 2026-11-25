@@ -91,16 +91,6 @@ internal static class Theme
 // Builds the panel's controls from plain shapes in a flat Valheim palette, with Valheim's TextMeshPro font
 internal static class Widgets
 {
-	/// <summary>
-	/// Cuts overflowing text off with "…" when the font can draw it, and plainly otherwise. The game's font has no "…",
-	/// and asking TextMeshPro for an ellipsis anyway logs a warning for every text object before it truncates instead.
-	/// </summary>
-	internal static void SetEllipsisOverflow(TMP_Text text)
-	{
-		bool hasEllipsis = text.font && text.font.HasCharacter((char)0x2026, searchFallbacks: true);
-		text.overflowMode = hasEllipsis ? TextOverflowModes.Ellipsis : TextOverflowModes.Truncate;
-	}
-
 	private static TMP_FontAsset s_font;
 
 	public static TMP_FontAsset Font
@@ -174,7 +164,7 @@ internal static class Widgets
 		label.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
 		label.richText = true;
 		label.textWrappingMode = TextWrappingModes.NoWrap;
-		Widgets.SetEllipsisOverflow(label);
+		label.overflowMode = TextOverflowModes.Truncate;
 		label.raycastTarget = false;
 		label.text = text;
 		go.SetActive(true);
@@ -363,7 +353,7 @@ internal static class Widgets
 			text.fontSize = fontSize;
 			text.color = Theme.Text;
 			text.textWrappingMode = TextWrappingModes.NoWrap;
-			Widgets.SetEllipsisOverflow(text);
+			text.overflowMode = TextOverflowModes.Truncate;
 			text.alignment = TextAlignmentOptions.MidlineLeft;
 		}
 
